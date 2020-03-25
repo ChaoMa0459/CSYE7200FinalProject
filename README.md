@@ -1,4 +1,5 @@
 # CSYE7255FinalProject - Spring 2020
+# Fake Disaster Tweets Prediction
 
 ## Team Information
 
