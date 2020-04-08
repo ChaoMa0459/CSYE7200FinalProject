@@ -28,25 +28,6 @@ class IngestSpec extends FlatSpec with Matchers {
     }
   }
 
-  it should "work for movie database" in {
-    implicit val codec: Codec = Codec("UTF-8")
-    // NOTE that you expect to see a number of exceptions thrown. That's OK. We expect that some lines will not parse correctly.
-    Try(Source.fromResource("movie_metadata.csv")) match {
-      case Success(source) =>
-        val ingester = new Ingest[Movie]()
-        val mys: Seq[Try[Movie]] = (for (my <- ingester(source)) yield my.transform(
-          { m => Success(m) }, { e => System.err.println(e); my }
-        )).toSeq
-        val mos: Seq[Option[Movie]] = for (my <- mys) yield for (m <- my.toOption; if m.production.country == "New Zealand") yield m
-        val ms = mos.flatten
-        ms.size shouldBe 4
-        ms foreach { println(_) }
-        source.close()
-      case Failure(x) =>
-        fail(x)
-    }
-  }
-
   it should "work for training data" in {
     implicit val codec: Codec = Codec("UTF-8")
     // NOTE that you expect to see a number of exceptions thrown. That's OK. We expect that some lines will not parse correctly.
