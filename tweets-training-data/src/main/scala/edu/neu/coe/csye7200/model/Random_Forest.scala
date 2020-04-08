@@ -1,10 +1,6 @@
-package classification.models
+package edu.neu.coe.csye7200.model
 
-import org.apache.spark.sql.types.{StructType,StructField,StringType,IntegerType};
-import org.apache.spark.sql.Row;
-import org.apache.spark.ml.feature.StopWordsRemover
-import org.apache.spark.ml.feature.{RegexTokenizer, Tokenizer}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.ml.feature.{RegexTokenizer, StopWordsRemover, Tokenizer}
 import org.apache.spark.sql.functions._
 
 class Random_Forest {
