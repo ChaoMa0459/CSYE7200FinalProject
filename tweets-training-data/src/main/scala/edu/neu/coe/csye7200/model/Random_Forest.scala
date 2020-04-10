@@ -59,7 +59,7 @@ import org.apache.spark.sql.functions._
     test_data_Tokenized.select("text", "words")
       .withColumn("tokens", countTokens_test(col("words"))).show(false)
 
-    //Romove the stop words in "text" column of train data and test data
+    //Remove the stop words in "text" column of train data and test data
     val remover = new StopWordsRemover()
       .setInputCol("words")
       .setOutputCol("filtered_words")
