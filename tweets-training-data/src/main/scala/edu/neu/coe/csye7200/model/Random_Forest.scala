@@ -1,7 +1,10 @@
 package edu.neu.coe.csye7200.model
 
 import org.apache.spark.ml.feature.{RegexTokenizer, StopWordsRemover, Tokenizer, HashingTF, IDF}
+import org.apache.spark.sql.types.{StructType,StructField,StringType,IntegerType};
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
+
 
 
   object random_forest extends App {
@@ -24,22 +27,28 @@ import org.apache.spark.sql.functions._
     df_train.show()
     df_test.show()
 
+    //Remove punctuate signs in text column
+    val test_with_no_punct = df_train.collect().map(_.getString(3).replaceAll("""[\p{Punct}]""", "")).toSeq
+    val rdd = spark.sparkContext.parallelize(test_with_no_punct)
+    val rdd_train = df_train.rdd.zip(rdd).map(r => Row.fromSeq(r._1.toSeq ++ Seq(r._2)))
+    val df_train_new = spark.createDataFrame(rdd_train, df_train.schema.add("new_text", StringType))
+
     //Separate sentence in text column into words in df_train and df_test
     //train data
-    val tokenizer_train = new Tokenizer().setInputCol("text").setOutputCol("words")
+    val tokenizer_train = new Tokenizer().setInputCol("new_text").setOutputCol("words")
     val train_data_Tokenizer = new RegexTokenizer()
-      .setInputCol("text")
+      .setInputCol("new_text")
       .setOutputCol("words")
-      .setPattern("\\W")
+      .setPattern("\\W") // alternatively .setPattern("\\w+").setGaps(false)
 
     val countTokens_train = udf { (words: Seq[String]) => words.length }
 
-    val tokenized_train = tokenizer_train.transform(df_train)
-    tokenized_train.select("text", "words")
+    val tokenized_train = tokenizer_train.transform(df_train_new)
+    tokenized_train.select("new_text", "words")
       .withColumn("tokens", countTokens_train(col("words"))).show(false)
 
-    val train_data_Tokenized = train_data_Tokenizer.transform(df_train)
-    train_data_Tokenized.select("text", "words")
+    val train_data_Tokenized = train_data_Tokenizer.transform(df_train_new)
+    train_data_Tokenized.select("new_text", "words")
       .withColumn("tokens", countTokens_train(col("words"))).show(false)
 
     //test data
