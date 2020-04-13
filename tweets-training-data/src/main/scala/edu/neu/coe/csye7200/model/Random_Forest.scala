@@ -91,6 +91,8 @@ import scala.collection.mutable
     val rescaledData = idfModel.transform(featurizedData)
     rescaledData.show(false)
 
+
+    
     // word count
     // filter real tweets and count frequencies
     val real_train_data = rescaledData.filter("target == 1")
@@ -109,7 +111,7 @@ import scala.collection.mutable
     val real_words_counts = rdd_real_words
       .map(word => (word, 1))
       .reduceByKey(_ + _).sortBy(_._2, false)
-    real_words_counts.take(20).foreach(println)
+    real_words_counts.take(50).foreach(println)
 
     // filter fake tweets and count frequencies
     val fake_train_data = rescaledData.filter("target == 0")
@@ -128,7 +130,7 @@ import scala.collection.mutable
     val fake_words_counts = rdd_fake_words
       .map(word => (word, 1))
       .reduceByKey(_ + _).sortBy(_._2, false)
-    fake_words_counts.take(20).foreach(println)
+    fake_words_counts.take(50).foreach(println)
 
     spark.stop()
   }
