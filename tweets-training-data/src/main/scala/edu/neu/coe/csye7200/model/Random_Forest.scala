@@ -30,7 +30,16 @@ import scala.collection.mutable
     df_test.show()
 
     //Remove punctuate signs in text column
-    val test_with_no_punct = df_train.collect().map(_.getString(3).replaceAll("""[\p{Punct}]""", "")).toSeq
+    val test_with_no_punct = df_train.collect().map(_.getString(3).replaceAll("https?://\\S+\\s?", "")
+                                                                  .replaceAll("""[\p{Punct}]""", "")
+                                                                  .replaceAll("Im", "i am")
+                                                                  .replaceAll("Whats", "what is")
+                                                                  .replaceAll("whats", "what is")
+                                                                  .replaceAll("Ill", "i will")
+                                                                  .replaceAll("theres", "there is")
+                                                                  .replaceAll("Theres", "there is")
+                                                                  .replaceAll("cant", "can not")).toSeq
+
     val rdd = spark.sparkContext.parallelize(test_with_no_punct)
     val rdd_train = df_train.rdd.zip(rdd).map(r => Row.fromSeq(r._1.toSeq ++ Seq(r._2)))
     val df_train_new = spark.createDataFrame(rdd_train, df_train.schema.add("new_text", StringType))
