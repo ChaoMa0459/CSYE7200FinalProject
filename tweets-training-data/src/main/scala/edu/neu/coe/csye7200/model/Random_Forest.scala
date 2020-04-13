@@ -1,9 +1,11 @@
 package edu.neu.coe.csye7200.model
 
-import org.apache.spark.ml.feature.{RegexTokenizer, StopWordsRemover, Tokenizer, HashingTF, IDF}
-import org.apache.spark.sql.types.{StructType,StructField,StringType,IntegerType};
+import org.apache.spark.ml.feature.{HashingTF, IDF, RegexTokenizer, StopWordsRemover, Tokenizer}
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
+
+import scala.collection.mutable
 
 
 
@@ -85,37 +87,59 @@ import org.apache.spark.sql.functions._
     remover.transform(train_data_Tokenized).show(false)
     remover.transform(test_data_Tokenized).show(false)
 
-    val train_data = remover.transform(train_data_Tokenized).withColumn("tokens", countTokens_test(col("filtered_words")))
-
-//    val sentenceData = spark.createDataFrame(Seq(
-//      (0.0, "Hi I heard about Spark"),
-//      (0.0, "I wish Java could use case classes"),
-//      (1.0, "Logistic regression models are neat")
-//    )).toDF("label", "sentence")
-//
-//    val tokenizer = new Tokenizer().setInputCol("sentence").setOutputCol("words")
-//    val wordsData = tokenizer.transform(sentenceData)
-//
-//    wordsData.show(false)
+    val train_data = remover.transform(train_data_Tokenized).withColumn("tokens", countTokens_train(col("filtered_words")))
 
     val hashingTF = new HashingTF()
-      .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(100)
-
+      .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
     val featurizedData = hashingTF.transform(train_data)
-
-    // featurizedData is ok
     featurizedData.show(false)
     // alternatively, CountVectorizer can also be used to get term frequency vectors
 
     val idf = new IDF().setInputCol("rawFeatures").setOutputCol("features")
-    // TODO there is an NPE at line 93.
     val idfModel = idf.fit(featurizedData)
+    val rescaledData = idfModel.transform(featurizedData)
+    rescaledData.show(false)
 
-//     val rescaledData = idfModel.transform(featurizedData)
-//
-//     rescaledData.show(false)
-//
-//     rescaledData.select("label", "features").show(false)
+
+    
+    // word count
+    // filter real tweets and count frequencies
+    val real_train_data = rescaledData.filter("target == 1")
+    var real_words_data: Seq[String] = Seq()
+    real_train_data.foreach {
+      row => {
+        val filtered_words = row.toSeq(7)
+        filtered_words match {
+          case w: mutable.WrappedArray[String] => real_words_data ++= w
+          case _ =>
+        }
+      }
+    }
+
+    val rdd_real_words = spark.sparkContext.parallelize(real_words_data)
+    val real_words_counts = rdd_real_words
+      .map(word => (word, 1))
+      .reduceByKey(_ + _).sortBy(_._2, false)
+    real_words_counts.take(50).foreach(println)
+
+    // filter fake tweets and count frequencies
+    val fake_train_data = rescaledData.filter("target == 0")
+    var fake_words_data: Seq[String] = Seq()
+    fake_train_data.foreach {
+      row => {
+        val filtered_words = row.toSeq(7)
+        filtered_words match {
+          case w: mutable.WrappedArray[String] => fake_words_data ++= w
+          case _ =>
+        }
+      }
+    }
+
+    val rdd_fake_words = spark.sparkContext.parallelize(fake_words_data)
+    val fake_words_counts = rdd_fake_words
+      .map(word => (word, 1))
+      .reduceByKey(_ + _).sortBy(_._2, false)
+    fake_words_counts.take(50).foreach(println)
 
     spark.stop()
   }
