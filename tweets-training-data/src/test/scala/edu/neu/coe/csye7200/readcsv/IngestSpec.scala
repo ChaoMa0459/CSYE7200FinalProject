@@ -5,9 +5,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.io.{Codec, Source}
 import scala.util._
 
-/**
-  * Created by scalaprof on 9/13/16.
-  */
 class IngestSpec extends FlatSpec with Matchers {
 
   behavior of "ingest"
