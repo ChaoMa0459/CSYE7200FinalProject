@@ -10,7 +10,7 @@ import scala.collection.mutable
 object SparkWordCount extends App {
 
   // read train data
-  val rescaledData: DataFrame = readTrainData()
+  val rescaledData:(DataFrame, Int)= readTrainData()
 
 //  // TF
 //  val hashingTF: HashingTF = new HashingTF()
@@ -24,10 +24,10 @@ object SparkWordCount extends App {
 //  val idfModel: IDFModel = idf.fit(featuredData)
 //  val rescaledData: DataFrame = idfModel.transform(featuredData)
 
-  rescaledData.show()
+  rescaledData._1.show()
   // word count
   // filter real tweets and count frequencies
-  val real_train_data: Dataset[Row] = rescaledData.filter("target == 1")
+  val real_train_data: Dataset[Row] = rescaledData._1.filter("target == 1")
 
   var real_words_data: Seq[String] = Seq()
   real_train_data.foreach {
@@ -50,7 +50,7 @@ object SparkWordCount extends App {
   real_words_counts.take(50).foreach(println)
 
   // filter fake tweets and count frequencies
-  val fake_train_data: Dataset[Row] = rescaledData.filter("target == 0")
+  val fake_train_data: Dataset[Row] = rescaledData._1.filter("target == 0")
   var fake_words_data: Seq[String] = Seq()
   fake_train_data.foreach {
     row => {

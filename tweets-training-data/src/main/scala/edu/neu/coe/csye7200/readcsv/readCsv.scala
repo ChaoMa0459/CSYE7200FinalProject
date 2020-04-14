@@ -6,6 +6,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.countDistinct
 
 import scala.collection.mutable
 
@@ -15,7 +16,7 @@ object readCsv {
     .appName("Spark CSV Reader")
     .getOrCreate;
 
-  def readTrainData(): DataFrame = {
+  def readTrainData(): (DataFrame, Int) = {
     //Read csv into dataframe
     val df_train: DataFrame = sparksession.read
       .format("csv")
@@ -28,7 +29,7 @@ object readCsv {
     //    .option("mode", "DROPMALFORMED")
     //    .load("src/test/resources/test.csv")
 
-    df_train.show()
+//    df_train.show()
     //  df_test.show()
 
     //Remove punctuate signs in text column
@@ -92,8 +93,10 @@ object readCsv {
     val train_data: DataFrame = remover.transform(train_data_Tokenized).withColumn("tokens", countTokens_train(col("filtered_words")))
 
     // TF
+    val num_features = train_data.agg(countDistinct("filtered_words")).first().getLong(0)
+    val num_features_int = num_features.toInt
     val hashingTF: HashingTF = new HashingTF()
-      .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
+      .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(num_features_int)
     val featuredData: DataFrame = hashingTF.transform(train_data)
     featuredData.show(false)
     // alternatively, CountVectorizer can also be used to get term frequency vectors
@@ -102,10 +105,10 @@ object readCsv {
     val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
     val idfModel: IDFModel = idf.fit(featuredData)
     val rescaledData: DataFrame = idfModel.transform(featuredData)
-    rescaledData
+    (rescaledData, num_features_int)
   }
 
-  def readTestData(): DataFrame = {
+  def readTestData(): (DataFrame, Int) = {
     //Read csv into dataframe
       val df_test: DataFrame = sparksession.read
         .format("csv")
@@ -114,7 +117,7 @@ object readCsv {
         .load("src/test/resources/test.csv")
 
 //    df_train.show()
-      df_test.show()
+//      df_test.show()
 
     //Remove punctuate signs in text column
     val test_with_no_punct: Seq[String] = df_test.collect().map(_.getString(3).replaceAll("https?://\\S+\\s?", "")
@@ -160,8 +163,10 @@ object readCsv {
     val test_data: DataFrame = remover.transform(test_data_Tokenized).withColumn("tokens", countTokens_test(col("filtered_words")))
 
     // TF
+    val num_features_test = test_data.agg(countDistinct("filtered_words")).first().getLong(0)
+    val num_features_test_int = num_features_test.toInt
     val hashingTF: HashingTF = new HashingTF()
-      .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
+      .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(num_features_test_int)
     val featuredData: DataFrame = hashingTF.transform(test_data)
     featuredData.show(false)
     // alternatively, CountVectorizer can also be used to get term frequency vectors
@@ -170,7 +175,7 @@ object readCsv {
     val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
     val idfModel: IDFModel = idf.fit(featuredData)
     val rescaledData: DataFrame = idfModel.transform(featuredData)
-    rescaledData
+    (rescaledData, num_features_test_int)
   }
 
 }
