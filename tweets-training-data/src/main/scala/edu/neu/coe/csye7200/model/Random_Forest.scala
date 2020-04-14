@@ -11,8 +11,8 @@ import scala.collection.mutable
 
 
   object Random_Forest extends App {
-    val train_data: DataFrame = readTrainData()
-    train_data.show(false)
+    val rescaledData: DataFrame = readTrainData()
+    rescaledData.show(false)
 
     sparksession.stop()
   }
