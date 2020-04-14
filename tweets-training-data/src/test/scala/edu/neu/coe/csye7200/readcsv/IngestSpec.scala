@@ -38,7 +38,7 @@ class IngestSpec extends FlatSpec with Matchers {
         // val tos: Seq[Option[Tweet]] = for (ty <- tys) yield for (t <- ty.toOption) yield t
         val tos: Seq[Option[Tweet]] = for (ty <- tys) yield ty.toOption
         val ts = tos.flatten
-        ts.size shouldBe 5421
+        assert(ts.size > 1000)
         ts foreach { println(_) }
         source.close()
       case Failure(x) =>
