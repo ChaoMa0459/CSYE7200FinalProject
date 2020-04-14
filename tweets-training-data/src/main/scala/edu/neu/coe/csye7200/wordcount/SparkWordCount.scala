@@ -8,24 +8,27 @@ import org.apache.spark.rdd.RDD
 import scala.collection.mutable
 
 object SparkWordCount extends App {
+
   // read train data
   val train_data: DataFrame = readTrainData()
 
   // TF
   val hashingTF: HashingTF = new HashingTF()
     .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
-  val featurizedData: DataFrame = hashingTF.transform(train_data)
-  featurizedData.show(false)
+  val featuredData: DataFrame = hashingTF.transform(train_data)
+  featuredData.show(false)
   // alternatively, CountVectorizer can also be used to get term frequency vectors
 
   // IDF
   val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
-  val idfModel: IDFModel = idf.fit(featurizedData)
-  val rescaledData: DataFrame = idfModel.transform(featurizedData)
+  val idfModel: IDFModel = idf.fit(featuredData)
+  val rescaledData: DataFrame = idfModel.transform(featuredData)
 
+  rescaledData.show()
   // word count
   // filter real tweets and count frequencies
   val real_train_data: Dataset[Row] = rescaledData.filter("target == 1")
+
   var real_words_data: Seq[String] = Seq()
   real_train_data.foreach {
     row => {
@@ -37,10 +40,13 @@ object SparkWordCount extends App {
     }
   }
 
+  println(real_train_data)
+
   val rdd_real_words: RDD[String] = sparksession.sparkContext.parallelize(real_words_data)
   val real_words_counts: RDD[(String, Int)] = rdd_real_words
     .map(word => (word, 1))
-    .reduceByKey(_ + _).sortBy(_._2, false)
+    .reduceByKey(_ + _).sortBy(_._2, ascending = false)
+  println("real_words_counts " + real_words_counts.count())
   real_words_counts.take(50).foreach(println)
 
   // filter fake tweets and count frequencies
@@ -60,24 +66,11 @@ object SparkWordCount extends App {
   val fake_words_counts: RDD[(String, Int)] = rdd_fake_words
     .map(word => (word, 1))
     .reduceByKey(_ + _).sortBy(_._2, ascending = false)
+  println("fake_words_counts " + fake_words_counts.count())
   fake_words_counts.take(50).foreach(println)
 
-  sparksession.stop()
+  println("end function")
 
-//  val spark = SparkSession.builder
-//    .master("local[*]")
-//    .appName("Spark Word Count")
-//    .getOrCreate()
-//
-//  val lines = spark.sparkContext.parallelize(
-//    Seq("Spark Intellij Idea Scala test one",
-//      "Spark Intellij Idea Scala test two",
-//      "Spark Intellij Idea Scala test three"))
-//
-//  val counts = lines
-//    .flatMap(line => line.split(" "))
-//    .map(word => (word, 1))
-//    .reduceByKey(_ + _)
-//
-//  counts.foreach(println)
+  // (real_words_counts, fake_words_counts)
+
 }
