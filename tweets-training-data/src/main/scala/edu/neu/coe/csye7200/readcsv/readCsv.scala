@@ -91,7 +91,18 @@ object readCsv {
 
     val train_data: DataFrame = remover.transform(train_data_Tokenized).withColumn("tokens", countTokens_train(col("filtered_words")))
 
-    train_data
+    // TF
+    val hashingTF: HashingTF = new HashingTF()
+      .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
+    val featuredData: DataFrame = hashingTF.transform(train_data)
+    featuredData.show(false)
+    // alternatively, CountVectorizer can also be used to get term frequency vectors
+
+    // IDF
+    val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
+    val idfModel: IDFModel = idf.fit(featuredData)
+    val rescaledData: DataFrame = idfModel.transform(featuredData)
+    rescaledData
   }
 
   def readTestData(): DataFrame = {
@@ -148,7 +159,18 @@ object readCsv {
 
     val test_data: DataFrame = remover.transform(test_data_Tokenized).withColumn("tokens", countTokens_test(col("filtered_words")))
 
-    test_data
+    // TF
+    val hashingTF: HashingTF = new HashingTF()
+      .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
+    val featuredData: DataFrame = hashingTF.transform(test_data)
+    featuredData.show(false)
+    // alternatively, CountVectorizer can also be used to get term frequency vectors
+
+    // IDF
+    val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
+    val idfModel: IDFModel = idf.fit(featuredData)
+    val rescaledData: DataFrame = idfModel.transform(featuredData)
+    rescaledData
   }
 
 }

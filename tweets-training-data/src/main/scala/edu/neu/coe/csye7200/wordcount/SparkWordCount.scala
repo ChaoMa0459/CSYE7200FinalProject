@@ -10,19 +10,19 @@ import scala.collection.mutable
 object SparkWordCount extends App {
 
   // read train data
-  val train_data: DataFrame = readTrainData()
+  val rescaledData: DataFrame = readTrainData()
 
-  // TF
-  val hashingTF: HashingTF = new HashingTF()
-    .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
-  val featuredData: DataFrame = hashingTF.transform(train_data)
-  featuredData.show(false)
-  // alternatively, CountVectorizer can also be used to get term frequency vectors
-
-  // IDF
-  val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
-  val idfModel: IDFModel = idf.fit(featuredData)
-  val rescaledData: DataFrame = idfModel.transform(featuredData)
+//  // TF
+//  val hashingTF: HashingTF = new HashingTF()
+//    .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
+//  val featuredData: DataFrame = hashingTF.transform(train_data)
+//  featuredData.show(false)
+//  // alternatively, CountVectorizer can also be used to get term frequency vectors
+//
+//  // IDF
+//  val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
+//  val idfModel: IDFModel = idf.fit(featuredData)
+//  val rescaledData: DataFrame = idfModel.transform(featuredData)
 
   rescaledData.show()
   // word count
