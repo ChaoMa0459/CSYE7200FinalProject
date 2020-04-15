@@ -4,8 +4,11 @@ import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, sparksession}
 import org.apache.spark.ml.feature.{HashingTF, IDF, IDFModel}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.rdd.RDD
+import vegas.{Bar, Nom, Quant, Vegas}
+import vegas.sparkExt._
 
 import scala.collection.mutable
+
 
 object SparkWordCount extends App {
 
@@ -72,5 +75,13 @@ object SparkWordCount extends App {
   println("end function")
 
   // (real_words_counts, fake_words_counts)
+
+  val plot = Vegas("Country Pop").
+    withDataFrame(real_train_data.limit(20)).
+    encodeX("text", Nom).
+    encodeY("target", Quant).
+    mark(Bar)
+
+  plot.show
 
 }
