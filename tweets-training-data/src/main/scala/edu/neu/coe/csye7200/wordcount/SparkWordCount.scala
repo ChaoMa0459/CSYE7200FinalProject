@@ -6,6 +6,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.rdd.RDD
 import vegas.{Bar, Nom, Quant, Vegas}
 import vegas.sparkExt._
+import vegas.spec.Spec.TypeEnums.{Nominal, Quantitative}
 
 import scala.collection.mutable
 
@@ -14,18 +15,6 @@ object SparkWordCount extends App {
 
   // read train data
   val rescaledData:(DataFrame, Int)= readTrainData()
-
-//  // TF
-//  val hashingTF: HashingTF = new HashingTF()
-//    .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
-//  val featuredData: DataFrame = hashingTF.transform(train_data)
-//  featuredData.show(false)
-//  // alternatively, CountVectorizer can also be used to get term frequency vectors
-//
-//  // IDF
-//  val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
-//  val idfModel: IDFModel = idf.fit(featuredData)
-//  val rescaledData: DataFrame = idfModel.transform(featuredData)
 
   rescaledData._1.show()
   // word count
@@ -73,6 +62,20 @@ object SparkWordCount extends App {
   fake_words_counts.take(50).foreach(println)
 
   // (real_words_counts, fake_words_counts)
+
+  val real_count = real_train_data.count()
+
+  val fake_count = fake_train_data.count()
+
+  val real_fake_count_plot = Vegas("Target values").
+  withData(Seq(
+    Map("name" -> "Real", "count" -> real_count), Map("name" -> "fake", "count" -> fake_count)
+  )).
+    mark(Bar).
+    encodeX("name", Nom).
+    encodeY("count", Quantitative)
+
+  real_fake_count_plot.show
 
   val plot = Vegas("Country Pop").
     withDataFrame(real_train_data.limit(20)).

@@ -16,6 +16,8 @@ object readCsv {
     .appName("Spark CSV Reader")
     .getOrCreate;
 
+  sparksession.sparkContext.setLogLevel("WARN")
+
   def readTrainData(): (DataFrame, Int) = {
     //Read csv into dataframe
     val df_train: DataFrame = sparksession.read
@@ -64,23 +66,6 @@ object readCsv {
     val train_data_Tokenized: DataFrame = train_data_Tokenizer.transform(df_train_new)
     train_data_Tokenized.select("new_text", "words")
       .withColumn("tokens", countTokens_train(col("words"))).show(false)
-
-    //test data
-    //  val tokenizer_test = new Tokenizer().setInputCol("text").setOutputCol("words")
-    //  val test_data_Tokenizer = new RegexTokenizer()
-    //    .setInputCol("text")
-    //    .setOutputCol("words")
-    //    .setPattern("\\W")
-    //
-    //  val countTokens_test = udf { (words: Seq[String]) => words.length }
-    //
-    //  val tokenized_test = tokenizer_test.transform(df_test.na.fill(Map("text" -> "")))
-    //  tokenized_test.select("text", "words")
-    //    .withColumn("tokens", countTokens_test(col("words"))).show(false)
-    //
-    //  val test_data_Tokenized = test_data_Tokenizer.transform(df_test.na.fill(Map("text" -> "")))
-    //  test_data_Tokenized.select("text", "words")
-    //    .withColumn("tokens", countTokens_test(col("words"))).show(false)
 
     //Remove the stop words in "text" column of train data and test data
     val remover: StopWordsRemover = new StopWordsRemover()
