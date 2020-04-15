@@ -1,0 +1,6 @@
+*.class
+*.log
+.DS_Store
+tweets-training-data/.idea/
+tweets-training-data/target/
+tweets-training-data/project/target/
