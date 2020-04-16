@@ -1,8 +1,9 @@
-package edu.neu.coe.csye7200.readcsv
+package edu.neu.coe.csye7200.unittests
 
+import edu.neu.coe.csye7200.readcsv.{Ingest, Ingestible}
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.io.{Codec, Source}
+import scala.io.Source
 import scala.util._
 
 class IngestSpec extends FlatSpec with Matchers {

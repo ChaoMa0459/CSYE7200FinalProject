@@ -1,4 +1,4 @@
-package edu.neu.coe.csye7200.model
+package edu.neu.coe.csye7200.unittests
 
 import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, clean_Data, tf_idf, sparksession}
 import sparksession.implicits._

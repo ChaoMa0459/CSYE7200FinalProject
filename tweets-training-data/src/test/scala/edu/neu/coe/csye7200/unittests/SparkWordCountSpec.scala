@@ -1,16 +1,15 @@
-package edu.neu.coe.csye7200.wordcount
+package edu.neu.coe.csye7200.unittests
 
+import edu.neu.coe.csye7200.readcsv.readCsv.{clean_Data, readTrainData}
 import edu.neu.coe.csye7200.wordcount.SparkWordCount.filterData
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Dataset, Row}
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.io.Source
-
 class SparkWordCountSpec extends FlatSpec with Matchers {
-  behavior of "word frequencies"
 
-  val filteredData: (Dataset[Row], Dataset[Row]) = filterData()
+  behavior of "word frequencies"
+  val rescaledData: DataFrame = clean_Data(readTrainData())
+  val filteredData: (Dataset[Row], Dataset[Row]) = filterData(rescaledData)
 
   it should "work for real disaster tweets count" in {
     val real_words = filteredData._1

@@ -16,29 +16,25 @@ object SparkWordCount extends App {
 
 
   // read train data
-  val rescaledData= clean_Data(readTrainData())
+  val rescaledData = clean_Data(readTrainData())
 
   rescaledData.show()
   // word count
   // filter real tweets and count frequencies
-  val real_train_data: Dataset[Row] = rescaledData.filter("target == 1")
 
-  def filterData(): (Dataset[Row], Dataset[Row]) = {
+  def filterData(data: DataFrame): (Dataset[Row], Dataset[Row]) = {
     // read train data
-    val rescaledData: (DataFrame, Int) = readTrainData()
-
-    rescaledData._1.show()
+    data.show()
     // word count
     // filter real tweets and count frequencies
-    val real_train_data: Dataset[Row] = rescaledData._1.filter("target == 1")
-    val fake_train_data: Dataset[Row] = rescaledData._1.filter("target == 0")
-    (real_train_data, fake_train_data)
+    val real_data: Dataset[Row] = data.filter("target == 1")
+    val fake_data: Dataset[Row] = data.filter("target == 0")
+    (real_data, fake_data)
   }
 
-  val filteredData = filterData()
+  val filteredData = filterData(rescaledData)
   val real_train_data = filteredData._1
   val fake_train_data = filteredData._2
-
 
   var real_words_data: Seq[String] = Seq()
   real_train_data.foreach {
@@ -66,8 +62,6 @@ object SparkWordCount extends App {
   real_words_counts.take(50).foreach(println)
 
   // filter fake tweets and count frequencies
-
-  val fake_train_data: Dataset[Row] = rescaledData.filter("target == 0")
 
   var fake_words_data: Seq[String] = Seq()
   fake_train_data.foreach {

@@ -4,7 +4,7 @@ import javax.swing.ImageIcon
 
 import scala.swing._
 import scala.swing.event._
-import edu.neu.coe.csye7200.model.Classification_models.build_model
+import edu.neu.coe.csye7200.unittests.Classification_models.build_model
 
 object GUI extends SimpleSwingApplication {
 
@@ -171,6 +171,7 @@ object GUI extends SimpleSwingApplication {
         else
         {
           val result = build_model(text, model, num_of_tree, max_depth, seed, smoothing, max_iter, regularization, standardize, fit)
+          print(text, model, num_of_tree, max_depth, seed, smoothing, max_iter, regularization, standardize, fit)
           val accuracy  = result._1
           val prediction = result._2
           label.text = "Result: "+ prediction

@@ -1,7 +1,7 @@
-package edu.neu.coe.csye7200.readcsv
+package edu.neu.coe.csye7200.unittests
 
+import edu.neu.coe.csye7200.readcsv.readCsv.{readTestData, readTrainData}
 import org.scalatest.{FlatSpec, Matchers}
-import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, readTestData}
 
 class readCsvSpec extends FlatSpec with Matchers {
   behavior of "read csv files"
