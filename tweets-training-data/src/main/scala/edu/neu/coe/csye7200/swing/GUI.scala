@@ -1,9 +1,10 @@
 package edu.neu.coe.csye7200.swing
 
 import javax.swing.ImageIcon
+
 import scala.swing._
 import scala.swing.event._
-import edu.neu.coe.csye7200.model.Classification_models.build_model
+//import edu.neu.coe.csye7200.model.Classification_models.build_model
 
 object GUI extends SimpleSwingApplication {
 
@@ -25,6 +26,7 @@ object GUI extends SimpleSwingApplication {
     //第二组参数
     var N1 = new ComboBox(List(0, 1, 5, 10))
     //第三组参数
+
     var L1 = new ComboBox(List(20, 50, 100, 150))
     var L2 = new ComboBox(List(0.0, 0.1, 0.5, 1.0, 2.0))
     var L3 = new ComboBox(List(true, false))
@@ -33,11 +35,26 @@ object GUI extends SimpleSwingApplication {
       text = "Start Prediction"
     }
     var label = new Label {
-      text = "there is no result"
+      text = "True"
     }
     var label2 = new Label {
-      icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")
+//      icon = new ImageIcon("src/main/resources/RealorFake_count.png")
     }
+
+//    var L1 = new ComboBox(List(20,50,100,150))
+//    var L2 = new ComboBox(List(0.0,0.1,0.5,1.0,2.0))
+//    var L3 = new ComboBox(List(true,false))
+//    var L4 = new ComboBox(List(true,false))
+//    var button = new Button { text = "Start Prediction" }
+//    var label = new Label { text = "there is no result"}
+//    var label2 = new Label()
+    var label3 = new Label(){
+//  icon = new ImageIcon("src/main/resources/real_words_count.png")
+}
+    var label4 = new Label(){
+      icon = new ImageIcon("src/main/resources/real_word_cloud.png")
+    }
+
     //页面布局
     contents = new BoxPanel(Orientation.Vertical) {
       //input section
@@ -49,7 +66,7 @@ object GUI extends SimpleSwingApplication {
       }
       contents += new Separator
       //choose model section & Set section
-      contents += new GridPanel(4, 1) {
+      contents += new ScrollPane(new GridPanel(4, 1) {
         //choose model
         contents += new BorderPanel {
           layout += new Label("Choose Model:") -> West
@@ -80,23 +97,38 @@ object GUI extends SimpleSwingApplication {
         //set3
         contents += new BorderPanel {
           layout += new Label("SVM:") -> West
-          layout += new FlowPanel {
-            contents += new Label("Max iterations:")
-            contents += L1
-            contents += new Label("Regularization parameter:")
-            contents += L2
-            contents += new Label("Standardize the training features")
-            contents += L3
-            contents += new Label("Fit an intercept term:")
-            contents += L4
+          layout += new BorderPanel {
+            layout += new FlowPanel {
+              contents += new Label("Max iterations:")
+              contents += L1
+              contents += new Label("Regularization parameter:")
+              contents += L2
+            } -> North
+            layout += new FlowPanel {
+              contents += new Label("Standardize the training features before fitting the model:")
+              contents += L3
+              contents += new Label("Fit an intercept term:")
+              contents += L4
+            } -> South
           } -> Center
         }
-      }
-      contents += new Separator
+      })
+
       //button & result
       contents += button
-      contents += label2
-      contents += label
+      contents += new Separator
+      contents += new GridPanel(1,1){
+        contents += new BorderPanel {
+          layout += new Label("Result:") -> West
+        }
+      }
+      contents += new ScrollPane(new BoxPanel(Orientation.Vertical){
+        contents += label
+        contents += label2
+        contents += label3
+        contents += label4
+      }
+      )
       border = Swing.EmptyBorder(30, 30, 30, 30)
     }
 
@@ -109,6 +141,13 @@ object GUI extends SimpleSwingApplication {
         //获取文本信息用textField.text
         //结果展示放到lavel.text = 这里
         clicks += 1
+        //获取选中的radio的内容 例buttonGroup.selected.get.text
+        //获取combobox选中的value 例R2.item.toString
+        label.text = "123456789"
+        label2 = new Label{icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")}
+        label3 = new Label{icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")}
+        label4 = new Label{icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")}
+
       //获取选中的radio的内容
         val model = buttonGroup.selected.get.text.toString
         val text = textField.text.toString
@@ -120,7 +159,7 @@ object GUI extends SimpleSwingApplication {
         val regularization = L2.selection.item.toString
         val standardize = L3.selection.item.toString
         val fit = L4.selection.item.toString
-        val result = build_model(text, model, num_of_tree, max_depth, seed, smoothing, max_iter, regularization, standardize, fit)
+//        val result = build_model(text, model, num_of_tree, max_depth, seed, smoothing, max_iter, regularization, standardize, fit)
 //        val accuracy  = result._1
 //        val prediction = result._2
     }

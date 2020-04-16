@@ -30,41 +30,41 @@ import scala.collection.mutable
       val nums_of_features = readTrainData()._2
       val df = rescaledData.select("target", "features")
 
-      def deal_with_user_input(text:String):DataFrame={
-        val test_with_no_punct = text.replaceAll("https?://\\S+\\s?", "")
-                                    .replaceAll("""[\p{Punct}]""", "")
-                                    .replaceAll("Im", "i am")
-                                    .replaceAll("Whats", "what is")
-                                    .replaceAll("whats", "what is")
-                                    .replaceAll("Ill", "i will")
-                                    .replaceAll("theres", "there is")
-                                    .replaceAll("Theres", "there is")
-                                    .replaceAll("cant", "can not")
-        val arraylist: Array[(String,Integer)] = Array(test_with_no_punct)
-        val schema = StructType(StructField("text", StringType, false) :: Nil)
-        val rdd = sparksession.sparkContext.parallelize(arraylist).map(x => Row(x))
-        val sqlContext = new org.apache.spark.sql.SQLContext(sparksession.sparkContext)
-        val df_user = sqlContext.createDataFrame(rdd, schema)
-        val tokenizer_user: Tokenizer = new Tokenizer().setInputCol("text").setOutputCol("words")
-        val user_data_Tokenizer: RegexTokenizer = new RegexTokenizer().setInputCol("text").setOutputCol("words").setPattern("\\W")
-        val countTokens_train: UserDefinedFunction = udf { (words: Seq[String]) => words.length }
-        val tokenized_user: DataFrame = tokenizer_user.transform(df_user)
-        tokenized_user.select("text", "words").withColumn("tokens", countTokens_train(col("words"))).show(false)
-        val user_data_Tokenized: DataFrame = user_data_Tokenizer.transform(df_user)
-        user_data_Tokenized.select("text", "words").withColumn("tokens", countTokens_train(col("words"))).show(false)
-        val remover: StopWordsRemover = new StopWordsRemover().setInputCol("words").setOutputCol("filtered_words")
-        remover.transform(user_data_Tokenized).show(false)
-        val user_data: DataFrame = remover.transform(user_data_Tokenized).withColumn("tokens", countTokens_train(col("filtered_words")))
-        val num_features = user_data.agg(countDistinct("filtered_words")).first().getLong(0)
-        val num_features_int = num_features.toInt
-        val hashingTF: HashingTF = new HashingTF().setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(num_features_int)
-        val featuredData: DataFrame = hashingTF.transform(user_data)
-        featuredData.show(false)
-        val idf = new IDF().setInputCol("rawFeatures").setOutputCol("features")
-        val idfModel = idf.fit(featuredData)
-        val rescaledData: DataFrame = idfModel.transform(featuredData)
-        rescaledData
-      }
+//      def deal_with_user_input(text:String):DataFrame={
+//        val test_with_no_punct = text.replaceAll("https?://\\S+\\s?", "")
+//                                    .replaceAll("""[\p{Punct}]""", "")
+//                                    .replaceAll("Im", "i am")
+//                                    .replaceAll("Whats", "what is")
+//                                    .replaceAll("whats", "what is")
+//                                    .replaceAll("Ill", "i will")
+//                                    .replaceAll("theres", "there is")
+//                                    .replaceAll("Theres", "there is")
+//                                    .replaceAll("cant", "can not")
+//        val arraylist: Array[(String,Integer)] = Array(test_with_no_punct)
+//        val schema = StructType(StructField("text", StringType, false) :: Nil)
+//        val rdd = sparksession.sparkContext.parallelize(arraylist).map(x => Row(x))
+//        val sqlContext = new org.apache.spark.sql.SQLContext(sparksession.sparkContext)
+//        val df_user = sqlContext.createDataFrame(rdd, schema)
+//        val tokenizer_user: Tokenizer = new Tokenizer().setInputCol("text").setOutputCol("words")
+//        val user_data_Tokenizer: RegexTokenizer = new RegexTokenizer().setInputCol("text").setOutputCol("words").setPattern("\\W")
+//        val countTokens_train: UserDefinedFunction = udf { (words: Seq[String]) => words.length }
+//        val tokenized_user: DataFrame = tokenizer_user.transform(df_user)
+//        tokenized_user.select("text", "words").withColumn("tokens", countTokens_train(col("words"))).show(false)
+//        val user_data_Tokenized: DataFrame = user_data_Tokenizer.transform(df_user)
+//        user_data_Tokenized.select("text", "words").withColumn("tokens", countTokens_train(col("words"))).show(false)
+//        val remover: StopWordsRemover = new StopWordsRemover().setInputCol("words").setOutputCol("filtered_words")
+//        remover.transform(user_data_Tokenized).show(false)
+//        val user_data: DataFrame = remover.transform(user_data_Tokenized).withColumn("tokens", countTokens_train(col("filtered_words")))
+//        val num_features = user_data.agg(countDistinct("filtered_words")).first().getLong(0)
+//        val num_features_int = num_features.toInt
+//        val hashingTF: HashingTF = new HashingTF().setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(num_features_int)
+//        val featuredData: DataFrame = hashingTF.transform(user_data)
+//        featuredData.show(false)
+//        val idf = new IDF().setInputCol("rawFeatures").setOutputCol("features")
+//        val idfModel = idf.fit(featuredData)
+//        val rescaledData: DataFrame = idfModel.transform(featuredData)
+//        rescaledData
+//      }
       // Random Forest Classifier
       def split_data(df: DataFrame): (DataFrame, DataFrame) = {
         val splits = df.randomSplit(Array(0.6, 0.4))
@@ -92,9 +92,9 @@ import scala.collection.mutable
         println(s"Test set accuracy of Random Forest Classifier= ${accuracy}")
         val rfModel = model.stages(2).asInstanceOf[RandomForestClassificationModel]
         println(s"Learned classification forest model:\n ${rfModel.toDebugString}")
-        val df_user = deal_with_user_input(text)
-        val predictions_user = model.transform(df_user)
-        predictions_user.select("predictedLabel")
+//        val df_user = deal_with_user_input(text)
+//        val predictions_user = model.transform(df_user)
+//        predictions_user.select("predictedLabel")
         (predictions, accuracy)
       }
 
@@ -170,6 +170,6 @@ import scala.collection.mutable
       //      mark(Bar)
       //    res_plot.show
 
-      sparksession.stop()
+//      sparksession.stop()
     }
   }
