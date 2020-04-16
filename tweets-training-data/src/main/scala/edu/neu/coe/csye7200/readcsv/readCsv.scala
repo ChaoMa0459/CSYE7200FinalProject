@@ -16,7 +16,7 @@ object readCsv {
     .appName("Spark CSV Reader")
     .getOrCreate;
 
-  sparksession.sparkContext.setLogLevel("WARN")
+  sparksession.sparkContext.setLogLevel("ERROR")
 
   def readTrainData(): (DataFrame, Int) = {
     //Read csv into dataframe
