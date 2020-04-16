@@ -14,6 +14,7 @@ import scala.collection.mutable
 
 object SparkWordCount extends App {
 
+
   // read train data
   val rescaledData= clean_Data(readTrainData())
 
@@ -21,6 +22,23 @@ object SparkWordCount extends App {
   // word count
   // filter real tweets and count frequencies
   val real_train_data: Dataset[Row] = rescaledData.filter("target == 1")
+
+  def filterData(): (Dataset[Row], Dataset[Row]) = {
+    // read train data
+    val rescaledData: (DataFrame, Int) = readTrainData()
+
+    rescaledData._1.show()
+    // word count
+    // filter real tweets and count frequencies
+    val real_train_data: Dataset[Row] = rescaledData._1.filter("target == 1")
+    val fake_train_data: Dataset[Row] = rescaledData._1.filter("target == 0")
+    (real_train_data, fake_train_data)
+  }
+
+  val filteredData = filterData()
+  val real_train_data = filteredData._1
+  val fake_train_data = filteredData._2
+
 
   var real_words_data: Seq[String] = Seq()
   real_train_data.foreach {
@@ -33,17 +51,24 @@ object SparkWordCount extends App {
     }
   }
 
-  println(real_train_data)
+  println("real_train_data: " + real_train_data.count())
+
+  val size = real_words_data.size
 
   val rdd_real_words: RDD[String] = sparksession.sparkContext.parallelize(real_words_data)
+
   val real_words_counts: RDD[(String, Int)] = rdd_real_words
     .map(word => (word, 1))
     .reduceByKey(_ + _).sortBy(_._2, ascending = false)
+
   println("real_words_counts " + real_words_counts.count())
+
   real_words_counts.take(50).foreach(println)
 
   // filter fake tweets and count frequencies
+
   val fake_train_data: Dataset[Row] = rescaledData.filter("target == 0")
+
   var fake_words_data: Seq[String] = Seq()
   fake_train_data.foreach {
     row => {
@@ -59,17 +84,20 @@ object SparkWordCount extends App {
   val fake_words_counts: RDD[(String, Int)] = rdd_fake_words
     .map(word => (word, 1))
     .reduceByKey(_ + _).sortBy(_._2, ascending = false)
+
   println("fake_words_counts " + fake_words_counts.count())
+
   fake_words_counts.take(50).foreach(println)
 
   val real_count = real_train_data.count()
+
   val fake_count = fake_train_data.count()
 
   // plot read tweets count and fake tweets count
   val real_fake_count_plot = Vegas("Target values", width = 300.0, height = 500.0).
-  withData(Seq(
-    Map("tweets" -> "Real", "count" -> real_count), Map("tweets" -> "fake", "count" -> fake_count)
-  )).
+    withData(Seq(
+      Map("tweets" -> "Real", "count" -> real_count), Map("tweets" -> "fake", "count" -> fake_count)
+    )).
     mark(Bar).
     encodeX("tweets", Nom).
     encodeY("count", Quantitative)
@@ -99,13 +127,5 @@ object SparkWordCount extends App {
     encodeY("count", Quantitative)
 
   fake_word_count_plot.show
-
-//  val plot = Vegas("Country Pop").
-//    withDataFrame(real_train_data.limit(20)).
-//    encodeX("text", Nom).
-//    encodeY("target", Quant).
-//    mark(Bar)
-//
-//  plot.show
 
 }
