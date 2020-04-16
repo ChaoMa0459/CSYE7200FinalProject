@@ -1,6 +1,6 @@
 package edu.neu.coe.csye7200.wordcount
 
-import edu.neu.coe.csye7200.wordcount.SparkWordCount.filterData
+//import edu.neu.coe.csye7200.wordcount.SparkWordCount.filterData
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, Row}
 import org.scalatest.{FlatSpec, Matchers}

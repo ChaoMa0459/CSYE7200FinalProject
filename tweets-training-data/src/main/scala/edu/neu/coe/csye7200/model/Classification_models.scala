@@ -26,7 +26,7 @@ import scala.collection.mutable
 
 
     def build_model(text: String, model: String, num_of_tree: String, max_depth: String, seed: String,
-                    smoothing: String, max_iter: String, regularization: String, standardize: String, fit: String): (Double, String) = {
+                    smoothing: String, max_iter: String, regularization: String, standardize: String, fit: String): (Double, String, Long) = {
 
       val data = readTrainData()
       val cleaned_data = clean_Data(data)
@@ -118,31 +118,37 @@ import scala.collection.mutable
 
       if(model == "Random Forest Classifier"){
         println("Start training and testing Random Forest Classifier")
+        val start = System.currentTimeMillis()
         val rfc_res = RFC(featured_df, featured_user, num_features.toInt)
+        val end = System.currentTimeMillis()
         rfc_res._1.show()
         println(rfc_res._2)
         println(rfc_res._3)
-        return (rfc_res._2, rfc_res._3)
+        return (rfc_res._2, rfc_res._3, end - start)
       }
       if(model == "Naive Bayesian Classifier"){
         println("Start training and testing Naive Bayesian Classifier")
+        val start = System.currentTimeMillis()
         val nb_res = NB(featured_df, featured_user)
+        val end = System.currentTimeMillis()
         nb_res._1.show()
         println(nb_res._2)
         println(nb_res._3)
-        return (nb_res._2, nb_res._3)
+        return (nb_res._2, nb_res._3, end - start)
       }
-      if(model == "SVM"){
+      if(model == "Linear Support Vector Classification"){
         println("Start training and testing Linear Support Vector Classifier")
+        val start = System.currentTimeMillis()
         val svc_res = SVC(featured_df, featured_user)
+        val end = System.currentTimeMillis()
         svc_res._1.show()
         println(svc_res._2)
         println(svc_res._3)
-        return (svc_res._2, svc_res._3)
+        return (svc_res._2, svc_res._3, end - start)
       }
       else
         {
-          return (0, "Please select a model!")
+          return (0, "Please select a model!",0)
         }
   //    val arraylist: Array[(String, Any)] = Array(("Random Forest Classifier", rfc_res._2),
   //      ("Naive Bayesian Classifier", nb_res._2),
