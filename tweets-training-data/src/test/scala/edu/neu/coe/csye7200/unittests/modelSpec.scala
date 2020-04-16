@@ -34,7 +34,7 @@ class modelSpec extends FlatSpec with Matchers {
   }
 
   it should "work for SVM" in {
-    val model = "SVM"
+    val model = "Linear Support Vector Classification"
     val result = build_model(text, model, num_of_tree, max_depth, seed, smoothing, max_iter, regularization, standardize, fit)
     val accuracy  = result._1
     assert(accuracy > 0.7)
