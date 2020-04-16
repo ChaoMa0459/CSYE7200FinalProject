@@ -4,6 +4,7 @@ import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, sparksession}
 import org.apache.spark.ml.feature.{HashingTF, IDF, IDFModel}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
 import vegas.{Bar, Nom, Quant, Vegas}
 import vegas.sparkExt._
 import vegas.spec.Spec.TypeEnums.{Nominal, Quantitative}
@@ -61,28 +62,50 @@ object SparkWordCount extends App {
   println("fake_words_counts " + fake_words_counts.count())
   fake_words_counts.take(50).foreach(println)
 
-  // (real_words_counts, fake_words_counts)
-
   val real_count = real_train_data.count()
-
   val fake_count = fake_train_data.count()
 
-  val real_fake_count_plot = Vegas("Target values").
+  // plot read tweets count and fake tweets count
+  val real_fake_count_plot = Vegas("Target values", width = 300.0, height = 500.0).
   withData(Seq(
-    Map("name" -> "Real", "count" -> real_count), Map("name" -> "fake", "count" -> fake_count)
+    Map("tweets" -> "Real", "count" -> real_count), Map("tweets" -> "fake", "count" -> fake_count)
   )).
     mark(Bar).
-    encodeX("name", Nom).
+    encodeX("tweets", Nom).
     encodeY("count", Quantitative)
 
   real_fake_count_plot.show
 
-  val plot = Vegas("Country Pop").
-    withDataFrame(real_train_data.limit(20)).
-    encodeX("text", Nom).
-    encodeY("target", Quant).
-    mark(Bar)
+  // plot keyword count in real tweets
+  val seq_real_words = real_words_counts.
+    map(x => Map("real_tweets_words" -> x._1, "count" -> x._2)).collect().take(20)
 
-  plot.show
+  val real_word_count_plot = Vegas("Real words", width = 300.0, height = 500.0).
+    withData(seq_real_words).
+    mark(Bar).
+    encodeX("real_tweets_words", Nom).
+    encodeY("count", Quantitative)
+
+  real_word_count_plot.show
+
+  // plot keyword count in fake tweets
+  val seq_fake_words = fake_words_counts.
+    map(x => Map("fake_tweets_words" -> x._1, "count" -> x._2)).collect().take(20)
+
+  val fake_word_count_plot = Vegas("Fake words", width = 300.0, height = 500.0).
+    withData(seq_fake_words).
+    mark(Bar).
+    encodeX("fake_tweets_words", Nom).
+    encodeY("count", Quantitative)
+
+  fake_word_count_plot.show
+
+//  val plot = Vegas("Country Pop").
+//    withDataFrame(real_train_data.limit(20)).
+//    encodeX("text", Nom).
+//    encodeY("target", Quant).
+//    mark(Bar)
+//
+//  plot.show
 
 }
