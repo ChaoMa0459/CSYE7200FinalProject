@@ -24,12 +24,12 @@ object readCsv {
       .format("csv")
       .option("header", "true")
       .option("mode", "DROPMALFORMED")
-      .load("src/test/resources/train.csv")
+      .load("src/main/resources/train.csv")
     //  val df_test: DataFrame = spark.read
     //    .format("csv")
     //    .option("header", "true")
     //    .option("mode", "DROPMALFORMED")
-    //    .load("src/test/resources/test.csv")
+    //    .load("src/main/resources/test.csv")
 
 //    df_train.show()
     //  df_test.show()
@@ -99,7 +99,7 @@ object readCsv {
         .format("csv")
         .option("header", "true")
         .option("mode", "DROPMALFORMED")
-        .load("src/test/resources/test.csv")
+        .load("src/main/resources/test.csv")
 
 //    df_train.show()
 //      df_test.show()
