@@ -4,7 +4,7 @@ import javax.swing.ImageIcon
 
 import scala.swing._
 import scala.swing.event._
-//import edu.neu.coe.csye7200.model.Classification_models.build_model
+import edu.neu.coe.csye7200.model.Classification_models.build_model
 
 object GUI extends SimpleSwingApplication {
 
@@ -35,8 +35,14 @@ object GUI extends SimpleSwingApplication {
       text = "Start Prediction"
     }
     var label = new Label {
-      text = "True"
+      //show the result of prediction
+      text = "Result:"
     }
+    var label_accu = new Label {
+      //show the result of prediction
+      text = ""
+    }
+
     var label2 = new Label {
 //      icon = new ImageIcon("src/main/resources/RealorFake_count.png")
     }
@@ -119,11 +125,11 @@ object GUI extends SimpleSwingApplication {
       contents += new Separator
       contents += new GridPanel(1,1){
         contents += new BorderPanel {
-          layout += new Label("Result:") -> West
+          layout += label -> West
+          layout += label_accu -> West
         }
       }
       contents += new ScrollPane(new BoxPanel(Orientation.Vertical){
-        contents += label
         contents += label2
         contents += label3
         contents += label4
@@ -143,7 +149,6 @@ object GUI extends SimpleSwingApplication {
         clicks += 1
         //获取选中的radio的内容 例buttonGroup.selected.get.text
         //获取combobox选中的value 例R2.item.toString
-        label.text = "123456789"
         label2 = new Label{icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")}
         label3 = new Label{icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")}
         label4 = new Label{icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")}
@@ -159,9 +164,19 @@ object GUI extends SimpleSwingApplication {
         val regularization = L2.selection.item.toString
         val standardize = L3.selection.item.toString
         val fit = L4.selection.item.toString
-//        val result = build_model(text, model, num_of_tree, max_depth, seed, smoothing, max_iter, regularization, standardize, fit)
-//        val accuracy  = result._1
-//        val prediction = result._2
+        if(text =="")
+          {
+            label_accu.text = "Please enter a tweet!"
+          }
+        else
+        {
+          val result = build_model(text, model, num_of_tree, max_depth, seed, smoothing, max_iter, regularization, standardize, fit)
+          val accuracy  = result._1
+          val prediction = result._2
+          label.text = "Result: "+ prediction
+          label_accu.text = "Accuracy of "+model+" is "+accuracy.toString()
+        }
+
     }
   }
 }

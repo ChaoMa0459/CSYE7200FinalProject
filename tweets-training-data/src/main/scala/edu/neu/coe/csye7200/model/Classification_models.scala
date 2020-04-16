@@ -1,6 +1,7 @@
 package edu.neu.coe.csye7200.model
 
-import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, sparksession}
+import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, clean_Data, tf_idf, sparksession}
+import sparksession.implicits._
 import org.apache.spark.ml.feature.{HashingTF, IDF, IDFModel, RegexTokenizer, StopWordsRemover, Tokenizer}
 import edu.neu.coe.csye7200.swing.GUI
 import org.apache.spark.ml.Pipeline
@@ -23,49 +24,20 @@ import scala.collection.mutable
 
   object Classification_models extends App {
 
-    def build_model(text: String, model: String, num_of_tree: String, max_depth: String, seed: String,
-                    smoothing: String, max_iter: String, regularization: String, standardize: String, fit: String): (Double, Integer) = {
-      val result_train = readTrainData()
-      val rescaledData = result_train._1
-      val nums_of_features = readTrainData()._2
-      val df = rescaledData.select("target", "features")
 
-//      def deal_with_user_input(text:String):DataFrame={
-//        val test_with_no_punct = text.replaceAll("https?://\\S+\\s?", "")
-//                                    .replaceAll("""[\p{Punct}]""", "")
-//                                    .replaceAll("Im", "i am")
-//                                    .replaceAll("Whats", "what is")
-//                                    .replaceAll("whats", "what is")
-//                                    .replaceAll("Ill", "i will")
-//                                    .replaceAll("theres", "there is")
-//                                    .replaceAll("Theres", "there is")
-//                                    .replaceAll("cant", "can not")
-//        val arraylist: Array[(String,Integer)] = Array(test_with_no_punct)
-//        val schema = StructType(StructField("text", StringType, false) :: Nil)
-//        val rdd = sparksession.sparkContext.parallelize(arraylist).map(x => Row(x))
-//        val sqlContext = new org.apache.spark.sql.SQLContext(sparksession.sparkContext)
-//        val df_user = sqlContext.createDataFrame(rdd, schema)
-//        val tokenizer_user: Tokenizer = new Tokenizer().setInputCol("text").setOutputCol("words")
-//        val user_data_Tokenizer: RegexTokenizer = new RegexTokenizer().setInputCol("text").setOutputCol("words").setPattern("\\W")
-//        val countTokens_train: UserDefinedFunction = udf { (words: Seq[String]) => words.length }
-//        val tokenized_user: DataFrame = tokenizer_user.transform(df_user)
-//        tokenized_user.select("text", "words").withColumn("tokens", countTokens_train(col("words"))).show(false)
-//        val user_data_Tokenized: DataFrame = user_data_Tokenizer.transform(df_user)
-//        user_data_Tokenized.select("text", "words").withColumn("tokens", countTokens_train(col("words"))).show(false)
-//        val remover: StopWordsRemover = new StopWordsRemover().setInputCol("words").setOutputCol("filtered_words")
-//        remover.transform(user_data_Tokenized).show(false)
-//        val user_data: DataFrame = remover.transform(user_data_Tokenized).withColumn("tokens", countTokens_train(col("filtered_words")))
-//        val num_features = user_data.agg(countDistinct("filtered_words")).first().getLong(0)
-//        val num_features_int = num_features.toInt
-//        val hashingTF: HashingTF = new HashingTF().setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(num_features_int)
-//        val featuredData: DataFrame = hashingTF.transform(user_data)
-//        featuredData.show(false)
-//        val idf = new IDF().setInputCol("rawFeatures").setOutputCol("features")
-//        val idfModel = idf.fit(featuredData)
-//        val rescaledData: DataFrame = idfModel.transform(featuredData)
-//        rescaledData
-//      }
-      // Random Forest Classifier
+    def build_model(text: String, model: String, num_of_tree: String, max_depth: String, seed: String,
+                    smoothing: String, max_iter: String, regularization: String, standardize: String, fit: String): (Double, String) = {
+
+      val data = readTrainData()
+      val cleaned_data = clean_Data(data)
+      val user_df = Seq(("user", "null", "null", text, "1")).toDF("id", "keyword", "location", "text", "target")
+      val cleaned_user_data = clean_Data(user_df)
+      val tf_idf_res = tf_idf(cleaned_data.union(cleaned_user_data))
+      val featured_data_user = tf_idf_res._1
+      val num_features = tf_idf_res._2
+      val featured_user =featured_data_user.filter(featured_data_user("id") === "user")
+      val featured_df = featured_data_user.filter(featured_data_user("id") !== "user")
+
       def split_data(df: DataFrame): (DataFrame, DataFrame) = {
         val splits = df.randomSplit(Array(0.6, 0.4))
         val (train_data, test_data) = (splits(0), splits(1))
@@ -73,76 +45,104 @@ import scala.collection.mutable
         //      print("There are "+test_data.count()+" rows in test data set\n")
         (train_data, test_data)
       }
+      // Random Forest Classifier
 
       def castColumnTo(df: DataFrame, cn: String, tpe: DataType): DataFrame = {
         df.withColumn(cn, df(cn).cast(tpe))
       }
 
-      def RFC(): (DataFrame, Double) = {
+      def RFC(df:DataFrame, user:DataFrame, nums_feature: Int):(DataFrame, Double, String) = {
+        var string_res = ""
         val labelIndexer = new StringIndexer().setInputCol("target").setOutputCol("indexedLabel").fit(df)
-        val featureIndexer = new VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(nums_of_features).fit(df)
-        val rf = new RandomForestClassifier().setLabelCol("indexedLabel").setFeaturesCol("indexedFeatures").setNumTrees(10).setMaxDepth(30).setSeed(5)
+        val featureIndexer = new VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(nums_feature).fit(df)
+        val rf = new RandomForestClassifier().setLabelCol("indexedLabel").setFeaturesCol("indexedFeatures").setNumTrees(num_of_tree.toInt).setMaxDepth(max_depth.toInt).setSeed(seed.toInt)
         val labelConverter = new IndexToString().setInputCol("prediction").setOutputCol("predictedLabel").setLabels(labelIndexer.labels)
         val pipeline = new Pipeline().setStages(Array(labelIndexer, featureIndexer, rf, labelConverter))
-        val model = pipeline.fit(split_data(df)._1)
-        val predictions = model.transform(split_data(df)._2)
-        predictions.select("predictedLabel", "target", "features").show(5)
+        val (train_df, test_df) = split_data(df)
+        val model = pipeline.fit(train_df)
+        val predictions = model.transform(test_df.union(user))
+        val predic_user = predictions.filter((predictions("id") === "user")).select(col("predictedLabel")).first.getString(0)
+        if (predic_user == "0") {string_res = "This tweet is not reporting a disaster."}
+        else if(predic_user == "1") {string_res = "This tweet is reporting a disaster."}
+        else {string_res = "I can not figure it out."}
         val evaluator = new MulticlassClassificationEvaluator().setLabelCol("indexedLabel").setPredictionCol("prediction").setMetricName("accuracy")
         val accuracy = evaluator.evaluate(predictions)
         println(s"Test set accuracy of Random Forest Classifier= ${accuracy}")
         val rfModel = model.stages(2).asInstanceOf[RandomForestClassificationModel]
-        println(s"Learned classification forest model:\n ${rfModel.toDebugString}")
-//        val df_user = deal_with_user_input(text)
-//        val predictions_user = model.transform(df_user)
-//        predictions_user.select("predictedLabel")
-        (predictions, accuracy)
+        // println(s"Learned classification forest model:\n ${rfModel.toDebugString}")
+
+        (predictions, accuracy, string_res)
       }
 
       // Naive Bayesian Classifier
-      def NB(): (DataFrame, Double) = {
+      def NB(df:DataFrame, user:DataFrame): (DataFrame, Double, String) = {
+        var string_res = ""
         val df_bayes = castColumnTo(df, "target", IntegerType)
-        val labelIndexer = new StringIndexer().setInputCol("target").setOutputCol("indexedLabel").fit(df_bayes)
-        val labelConverter = new IndexToString().setInputCol("prediction").setOutputCol("predictedLabel").setLabels(labelIndexer.labels)
-        val nb = new NaiveBayes().setLabelCol("target").setSmoothing(10)
-        val pipeline = new Pipeline().setStages(Array(labelIndexer, nb, labelConverter))
-        val model = pipeline.fit(split_data(df_bayes)._1)
-        val predictions = model.transform(split_data(df_bayes)._2)
-        predictions.show()
+        val df_user = castColumnTo(user, "target", IntegerType)
+        val nb = new NaiveBayes().setLabelCol("target").setSmoothing(smoothing.toDouble)
+        val pipeline = new Pipeline().setStages(Array(nb))
+        val (train_df, test_df) = split_data(df_bayes)
+        val model = pipeline.fit(train_df)
+        val predictions = model.transform(test_df.union(df_user))
+        val predic_user = predictions.filter((predictions("id") === "user")).select(col("prediction")).first.getDouble(0).toInt.toString
         val evaluator = new MulticlassClassificationEvaluator()
           .setLabelCol("target")
           .setPredictionCol("prediction")
           .setMetricName("accuracy")
         val accuracy = evaluator.evaluate(predictions)
         println(s"Test set accuracy of Naive Bayesian = $accuracy")
-        (predictions, accuracy)
+        if (predic_user == "0") {string_res = "This tweet is not reporting a disaster."}
+        else if(predic_user == "1") {string_res = "This tweet is reporting a disaster."}
+        else {string_res = "I can not figure it out."}
+        (predictions, accuracy, string_res)
       }
 
-      def SVC(): (DataFrame, Double) = {
+      def SVC(df:DataFrame, user:DataFrame): (DataFrame, Double, String) = {
+        var string_res = ""
         val df_svc = castColumnTo(df, "target", IntegerType)
-        val lsvc = new LinearSVC().setLabelCol("target").setMaxIter(50).setRegParam(0.1).setStandardization(false).setFitIntercept(true)
-        val lsvcModel = lsvc.fit(split_data(df_svc)._1)
-        val predictions = lsvcModel.transform(split_data(df_svc)._2)
+        val df_user = castColumnTo(user, "target", IntegerType)
+        val lsvc = new LinearSVC().setLabelCol("target").setMaxIter(max_iter.toInt)
+          .setRegParam(regularization.toDouble).setStandardization(standardize.toBoolean).setFitIntercept(fit.toBoolean)
+        val (train_df, test_df) = split_data(df_svc)
+        val lsvcModel = lsvc.fit(train_df)
+        val predictions = lsvcModel.transform(test_df.union(df_user))
+        val predic_user = predictions.filter((predictions("id") === "user")).select(col("prediction")).first.getDouble(0).toInt.toString
         val evaluator = new MulticlassClassificationEvaluator().setLabelCol("target").setPredictionCol("prediction").setMetricName("accuracy")
         val accuracy = evaluator.evaluate(predictions)
         println(s"Test set accuracy of Linear SVC= ${accuracy}")
-        (predictions, accuracy)
+        if (predic_user == "0") {string_res = "This tweet is not reporting a disaster."}
+        else if(predic_user == "1") {string_res = "This tweet is reporting a disaster."}
+        else {string_res = "I can not figure it out."}
+        (predictions, accuracy, string_res)
       }
 
-        if(model == "Random Forest Classifier"){
-          println("Start training and testing Random Forest Classifier")
-          val rfc_res = RFC()
-          return (rfc_res._2, 1)
-        }
-        else if(model == "Naive Bayesian Classifier"){
-          println("Start training and testing Naive Bayesian Classifier")
-          val nb_res = NB()
-          return (nb_res._2, 1)
-        }
-        else
+      if(model == "Random Forest Classifier"){
+        println("Start training and testing Random Forest Classifier")
+        val rfc_res = RFC(featured_df, featured_user, num_features.toInt)
+        rfc_res._1.show()
+        println(rfc_res._2)
+        println(rfc_res._3)
+        return (rfc_res._2, rfc_res._3)
+      }
+      if(model == "Naive Bayesian Classifier"){
+        println("Start training and testing Naive Bayesian Classifier")
+        val nb_res = NB(featured_df, featured_user)
+        nb_res._1.show()
+        println(nb_res._2)
+        println(nb_res._3)
+        return (nb_res._2, nb_res._3)
+      }
+      if(model == "SVM"){
+        println("Start training and testing Linear Support Vector Classifier")
+        val svc_res = SVC(featured_df, featured_user)
+        svc_res._1.show()
+        println(svc_res._2)
+        println(svc_res._3)
+        return (svc_res._2, svc_res._3)
+      }
+      else
         {
-          println("Start training and testing Linear Support Vector Classifier")
-          val svc_res = SVC()
-          return (svc_res._2, 1)
+          return (0, "Please select a model!")
         }
   //    val arraylist: Array[(String, Any)] = Array(("Random Forest Classifier", rfc_res._2),
   //      ("Naive Bayesian Classifier", nb_res._2),

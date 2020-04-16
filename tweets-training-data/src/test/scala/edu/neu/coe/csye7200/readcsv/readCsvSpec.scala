@@ -8,7 +8,7 @@ class readCsvSpec extends FlatSpec with Matchers {
 
   it should "work for training data" in {
     val trainData = readTrainData()
-    val size = trainData._1.count()
+    val size = trainData.count()
     println("trainData size: " + size)
     assert(size > 5000)
   }

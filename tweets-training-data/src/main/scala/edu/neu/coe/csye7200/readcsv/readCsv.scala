@@ -7,7 +7,6 @@ import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructT
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.countDistinct
-
 import scala.collection.mutable
 
 object readCsv {
@@ -18,15 +17,19 @@ object readCsv {
 
   sparksession.sparkContext.setLogLevel("ERROR")
 
-  def readTrainData(): (DataFrame, Int) = {
+  def readTrainData(): DataFrame = {
     //Read csv into dataframe
     val df_train: DataFrame = sparksession.read
       .format("csv")
       .option("header", "true")
       .option("mode", "DROPMALFORMED")
       .load("src/main/resources/train.csv")
+    df_train
+  }
+
+  def clean_Data(df:DataFrame): (DataFrame) = {
     //Remove punctuate signs in text column
-    val test_with_no_punct: Seq[String] = df_train.collect().map(_.getString(3).replaceAll("https?://\\S+\\s?", "")
+    val test_with_no_punct: Seq[String] = df.collect().map(_.getString(3).replaceAll("https?://\\S+\\s?", "")
       .replaceAll("""[\p{Punct}]""", "")
       .replaceAll("Im", "i am")
       .replaceAll("Whats", "what is")
@@ -37,52 +40,54 @@ object readCsv {
       .replaceAll("cant", "can not")).toSeq
 
     val rdd: RDD[String] = sparksession.sparkContext.parallelize(test_with_no_punct)
-    val rdd_train: RDD[Row] = df_train.rdd.zip(rdd).map(r => Row.fromSeq(r._1.toSeq ++ Seq(r._2)))
-    val df_train_new: DataFrame = sparksession.createDataFrame(rdd_train, df_train.schema.add("new_text", StringType))
+    val rdd_train: RDD[Row] = df.rdd.zip(rdd).map(r => Row.fromSeq(r._1.toSeq ++ Seq(r._2)))
+    val df_train_ne = sparksession.createDataFrame(rdd_train, df.schema.add("new_text", StringType))
 
-    //Separate sentence in text column into words in df_train and df_test
-    //train data
-    val tokenizer_train: Tokenizer = new Tokenizer().setInputCol("new_text").setOutputCol("words")
-    val train_data_Tokenizer: RegexTokenizer = new RegexTokenizer()
+    // Separate sentence in text column into words in df
+    val tokenizer_train = new Tokenizer().setInputCol("new_text").setOutputCol("words")
+    val train_data_Tokenizer= new RegexTokenizer()
       .setInputCol("new_text")
       .setOutputCol("words")
-      .setPattern("\\W") // alternatively .setPattern("\\w+").setGaps(false)
+      .setPattern("\\W")
 
-    val countTokens_train: UserDefinedFunction = udf { (words: Seq[String]) => words.length }
+    val countTokens_train = udf { (words: Seq[String]) => words.length }
 
-    val tokenized_train: DataFrame = tokenizer_train.transform(df_train_new)
-    tokenized_train.select("new_text", "words")
-      .withColumn("tokens", countTokens_train(col("words"))).show(false)
+    val tokenized_train = tokenizer_train.transform(df_train_ne)
+    tokenized_train.select("new_text", "words").withColumn("tokens", countTokens_train(col("words")))
 
-    val train_data_Tokenized: DataFrame = train_data_Tokenizer.transform(df_train_new)
+    val train_data_Tokenized= train_data_Tokenizer.transform(df_train_ne)
     train_data_Tokenized.select("new_text", "words")
-      .withColumn("tokens", countTokens_train(col("words"))).show(false)
+      .withColumn("tokens", countTokens_train(col("words")))
 
-    //Remove the stop words in "text" column of train data and test data
-    val remover: StopWordsRemover = new StopWordsRemover()
+    //Remove the stop words in "text" column of data
+    val remover = new StopWordsRemover()
       .setInputCol("words")
       .setOutputCol("filtered_words")
 
-    remover.transform(train_data_Tokenized).show(false)
-    //  remover.transform(test_data_Tokenized).show(false)
+    remover.transform(train_data_Tokenized)
 
-    val train_data: DataFrame = remover.transform(train_data_Tokenized).withColumn("tokens", countTokens_train(col("filtered_words")))
+    val data = remover.transform(train_data_Tokenized).withColumn("tokens", countTokens_train(col("filtered_words")))
 
-    // TF
-    val num_features = train_data.agg(countDistinct("filtered_words")).first().getLong(0)
+    data
+  }
+
+  def tf_idf(df:DataFrame): (DataFrame, Int) = {
+    val num_features = df.agg(countDistinct("filtered_words")).first().getLong(0)
     val num_features_int = num_features.toInt
-    val hashingTF: HashingTF = new HashingTF()
-      .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(num_features_int)
-    val featuredData: DataFrame = hashingTF.transform(train_data)
-    featuredData.show(false)
-    // alternatively, CountVectorizer can also be used to get term frequency vectors
-
-    // IDF
-    val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
-    val idfModel: IDFModel = idf.fit(featuredData)
-    val rescaledData: DataFrame = idfModel.transform(featuredData)
+    val hashingTF = new HashingTF().setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(num_features_int)
+    val featuredData= hashingTF.transform(df)
+    val idf = new IDF().setInputCol("rawFeatures").setOutputCol("features")
+    val idfModel = idf.fit(featuredData)
+    val rescaledData = idfModel.transform(featuredData)
     (rescaledData, num_features_int)
   }
+
+
+
+
+
+
+
 
   def readTestData(): (DataFrame, Int) = {
     //Read csv into dataframe

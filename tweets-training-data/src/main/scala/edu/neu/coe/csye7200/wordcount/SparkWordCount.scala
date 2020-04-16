@@ -1,6 +1,6 @@
 package edu.neu.coe.csye7200.wordcount
 
-import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, sparksession}
+import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, sparksession, clean_Data}
 import org.apache.spark.ml.feature.{HashingTF, IDF, IDFModel}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.rdd.RDD
@@ -15,12 +15,12 @@ import scala.collection.mutable
 object SparkWordCount extends App {
 
   // read train data
-  val rescaledData:(DataFrame, Int)= readTrainData()
+  val rescaledData= clean_Data(readTrainData())
 
-  rescaledData._1.show()
+  rescaledData.show()
   // word count
   // filter real tweets and count frequencies
-  val real_train_data: Dataset[Row] = rescaledData._1.filter("target == 1")
+  val real_train_data: Dataset[Row] = rescaledData.filter("target == 1")
 
   var real_words_data: Seq[String] = Seq()
   real_train_data.foreach {
@@ -43,7 +43,7 @@ object SparkWordCount extends App {
   real_words_counts.take(50).foreach(println)
 
   // filter fake tweets and count frequencies
-  val fake_train_data: Dataset[Row] = rescaledData._1.filter("target == 0")
+  val fake_train_data: Dataset[Row] = rescaledData.filter("target == 0")
   var fake_words_data: Seq[String] = Seq()
   fake_train_data.foreach {
     row => {
