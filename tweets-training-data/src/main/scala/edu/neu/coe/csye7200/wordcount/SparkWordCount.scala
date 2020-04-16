@@ -1,12 +1,13 @@
 package edu.neu.coe.csye7200.wordcount
 
-<<<<<<< Updated upstream
 import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, sparksession}
 import org.apache.spark.ml.feature.{HashingTF, IDF, IDFModel}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
 import vegas.{Bar, Nom, Quant, Vegas}
 import vegas.sparkExt._
+import vegas.spec.Spec.TypeEnums.{Nominal, Quantitative}
 
 import scala.collection.mutable
 
@@ -15,18 +16,6 @@ object SparkWordCount extends App {
 
   // read train data
   val rescaledData:(DataFrame, Int)= readTrainData()
-
-//  // TF
-//  val hashingTF: HashingTF = new HashingTF()
-//    .setInputCol("filtered_words").setOutputCol("rawFeatures").setNumFeatures(200)
-//  val featuredData: DataFrame = hashingTF.transform(train_data)
-//  featuredData.show(false)
-//  // alternatively, CountVectorizer can also be used to get term frequency vectors
-//
-//  // IDF
-//  val idf: IDF = new IDF().setInputCol("rawFeatures").setOutputCol("features")
-//  val idfModel: IDFModel = idf.fit(featuredData)
-//  val rescaledData: DataFrame = idfModel.transform(featuredData)
 
   rescaledData._1.show()
   // word count
@@ -73,39 +62,50 @@ object SparkWordCount extends App {
   println("fake_words_counts " + fake_words_counts.count())
   fake_words_counts.take(50).foreach(println)
 
-  println("end function")
+  val real_count = real_train_data.count()
+  val fake_count = fake_train_data.count()
 
-  // (real_words_counts, fake_words_counts)
+  // plot read tweets count and fake tweets count
+  val real_fake_count_plot = Vegas("Target values", width = 300.0, height = 500.0).
+  withData(Seq(
+    Map("tweets" -> "Real", "count" -> real_count), Map("tweets" -> "fake", "count" -> fake_count)
+  )).
+    mark(Bar).
+    encodeX("tweets", Nom).
+    encodeY("count", Quantitative)
 
-  val plot = Vegas("Country Pop").
-    withDataFrame(real_train_data.limit(20)).
-    encodeX("text", Nom).
-    encodeY("target", Quant).
-    mark(Bar)
+  real_fake_count_plot.show
 
-  plot.show
+  // plot keyword count in real tweets
+  val seq_real_words = real_words_counts.
+    map(x => Map("real_tweets_words" -> x._1, "count" -> x._2)).collect().take(20)
 
-=======
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.rdd.RDD
+  val real_word_count_plot = Vegas("Real words", width = 300.0, height = 500.0).
+    withData(seq_real_words).
+    mark(Bar).
+    encodeX("real_tweets_words", Nom).
+    encodeY("count", Quantitative)
 
-object SparkWordCount extends App {
+  real_word_count_plot.show
 
-  val spark = SparkSession.builder
-    .master("local[*]")
-    .appName("Spark Word Count")
-    .getOrCreate()
+  // plot keyword count in fake tweets
+  val seq_fake_words = fake_words_counts.
+    map(x => Map("fake_tweets_words" -> x._1, "count" -> x._2)).collect().take(20)
 
-  val lines = spark.sparkContext.parallelize(
-    Seq("Spark Intellij Idea Scala test one",
-      "Spark Intellij Idea Scala test two",
-      "Spark Intellij Idea Scala test three"))
+  val fake_word_count_plot = Vegas("Fake words", width = 300.0, height = 500.0).
+    withData(seq_fake_words).
+    mark(Bar).
+    encodeX("fake_tweets_words", Nom).
+    encodeY("count", Quantitative)
 
-  val counts = lines
-    .flatMap(line => line.split(" "))
-    .map(word => (word, 1))
-    .reduceByKey(_ + _)
+  fake_word_count_plot.show
 
-  counts.foreach(println)
->>>>>>> Stashed changes
+//  val plot = Vegas("Country Pop").
+//    withDataFrame(real_train_data.limit(20)).
+//    encodeX("text", Nom).
+//    encodeY("target", Quant).
+//    mark(Bar)
+//
+//  plot.show
+
 }
