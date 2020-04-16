@@ -6,7 +6,7 @@ import org.apache.spark.ml.feature.{HashingTF, IDF, IndexToString, RegexTokenize
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.sql.types.{DataType, IntegerType, StringType, StructField, StructType, DoubleType}
+import org.apache.spark.sql.types.{DataType, DoubleType, IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.ml.classification.NaiveBayes
 import org.apache.spark.ml.classification.LinearSVC
@@ -14,6 +14,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
+import vegas.{Bar, Nom, Quant, Vegas}
 
 import scala.collection.mutable
 
@@ -98,5 +99,19 @@ import scala.collection.mutable
     val df_res = sqlContext.createDataFrame(rdd, schema)
 
     df_res.show()
+
+//    // plot model and accuracy
+//    val seq_res: Seq[Map[String, Double]] = df_res.collect().
+//      map(x => Map(
+//          "Model" -> x.getAs("Model"),
+//          "Accuracy" -> x.getAs("Accuracy"))
+//      )
+//    val res_plot = Vegas("Model accuracy", width = 300.0, height = 500.0).
+//      withData(seq_res).
+//      encodeX("Model", Nom).
+//      encodeY("Accuracy", Quant).
+//      mark(Bar)
+//    res_plot.show
+
     sparksession.stop()
   }
