@@ -76,7 +76,7 @@ object GUI extends SimpleSwingApplication {
             contents += L1
             contents += new Label("Regularization parameter:")
             contents += L2
-            contents += new Label("Standardize the training features before fitting the model:")
+            contents += new Label("Standardize the training features")
             contents += L3
             contents += new Label("Fit an intercept term:")
             contents += L4
@@ -103,6 +103,18 @@ object GUI extends SimpleSwingApplication {
       //获取选中的radio的内容
       //label.text =
 
+      val text = textField.text
+      val num_of_tree = R1.selection.item
+      val max_depth = R2.selection.item
+      val seed = R3.selection.item
+      val smoothing = N1.selection.item
+      val max_iter = L1.selection.item
+      val regularization = L2.selection.item
+      val standardize = L3.selection.item
+      val fit = L4.selection.item
+      val list = List(text ,num_of_tree ,max_depth, seed, smoothing, max_iter, regularization, regularization, standardize, fit)
+      println(list)
     }
+
   }
 }
