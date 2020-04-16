@@ -1,12 +1,11 @@
 package edu.neu.coe.csye7200.model
 
-import edu.neu.coe.csye7200.model.Classification_models.df
-import edu.neu.coe.csye7200.readcsv.readCsv.{readTestData, readTrainData, sparksession}
-import org.apache.spark.ml.feature.{HashingTF, IDF, IndexToString, RegexTokenizer, StopWordsRemover, StringIndexer, Tokenizer, VectorIndexer}
+import edu.neu.coe.csye7200.readcsv.readCsv.{readTrainData, sparksession}
 import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
+import org.apache.spark.ml.classification.{LinearSVC, NaiveBayes, RandomForestClassificationModel, RandomForestClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.sql.types.{DataType, DoubleType, IntegerType, StringType, StructField, StructType}
+import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.ml.classification.NaiveBayes
 import org.apache.spark.ml.classification.LinearSVC
@@ -17,6 +16,7 @@ import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import vegas.{Bar, Nom, Quant, Vegas}
 
 import scala.collection.mutable
+
 
 
 

@@ -124,6 +124,23 @@ object GUI extends SimpleSwingApplication {
         label2 = new Label{icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")}
         label3 = new Label{icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")}
         label4 = new Label{icon = new ImageIcon("src/main/scala/edu/neu/coe/csye7200/image/monkey.jpg")}
+
+      //获取选中的radio的内容
+      //label.text =
+
+      val text = textField.text
+      val num_of_tree = R1.selection.item
+      val max_depth = R2.selection.item
+      val seed = R3.selection.item
+      val smoothing = N1.selection.item
+      val max_iter = L1.selection.item
+      val regularization = L2.selection.item
+      val standardize = L3.selection.item
+      val fit = L4.selection.item
+      val list = List(text ,num_of_tree ,max_depth, seed, smoothing, max_iter, regularization, regularization, standardize, fit)
+      println(list)
+
     }
+
   }
 }
